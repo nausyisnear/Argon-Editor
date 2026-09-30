@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luau Monaco Editor</title>
+    <!-- Monaco Editor CSS -->
+    <link rel="stylesheet" data-name="vs/editor/editor.main" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/editor/editor.main.min.css">
+    <style>
+        :root {
+            /* Exact background color 22, 21, 22 */
+            --bg-color: #161516; 
+            --tab-bg: #252426;
+            --tab-active-bg: #161516; 
+            --text-color: #cccccc;
+            --text-inactive: #969696;
+            --border-color: #2a292b;
+            --hover-bg: #3a393b;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Tab Bar --- */
+        .tab-bar {
+            display: flex;
+            background-color: var(--bg-color);
+            height: 35px;
+            align-items: center;
+            padding-left: 5px;
+            border-bottom: 1px solid var(--border-color);
+            user-select: none;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: none;
+        }
+        .tab-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab {
+            display: flex;
+            align-items: center;
+            background-color: var(--tab-bg);
+            color: var(--text-inactive);
+            padding: 0 15px;
+            height: 100%;
+            font-size: 13px;
+            cursor: pointer;
+            border-right: 1px solid var(--border-color);
+            transition: background 0.2s ease, color 0.2s ease;
+            position: relative;
+            white-space: nowrap;
+            min-width: 100px;
+        }
+
+        .tab:hover {
+            background-color: var(--hover-bg);
+            color: #e0e0e0;
+        }
+
+        /* Active Tab Styling - No Blue Line */
+        .tab.active {
+            background-color: var(--tab-active-bg);
+            color: #ffffff;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .tab.active::before {
+            display: none;
+        }
+
+        .tab-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 8px;
+        }
+
+        .tab-close {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            font-size: 14px;
+            color: #888;
+            opacity: 0;
+            transition: opacity 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.1s ease;
+            transform: scale(0.8);
+        }
+
+        .tab:hover .tab-close,
+        .tab.active .tab-close {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .tab-close:hover {
+            background-color: #555;
+            color: #fff;
+        }
+
+        .tab-close:active {
+            transform: scale(0.9);
+        }
+
+        .add-tab {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 5px;
+            font-size: 18px;
+            color: #888;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            border-radius: 3px;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+        .add-tab:hover {
+            background-color: var(--hover-bg);
+            color: #fff;
+        }
+        .add-tab:active {
+            transform: scale(0.9);
+        }
+
+        /* --- Editor Container --- */
+        #editor-container {
+            flex: 1;
+            width: 100%;
+            position: relative;
+        }
+
+        /* Monaco Specific Overrides */
+        .monaco-editor .margin {
+            background-color: #161516 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Tab Bar -->
+    <div class="tab-bar" id="tabBar">
+        <div class="add-tab" onclick="createNewTab()">+</div>
+    </div>
+
+    <!-- Editor Area -->
+    <div id="editor-container"></div>
+
+    <!-- Load Monaco -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+    
+    <script>
+        let editor;
+        let currentTabId = 0;
+        let tabs = []; 
+
+        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' } });
+
+        require(['vs/editor/editor.main'], function () {
+            
+            // 1. Register Luau Language
+            monaco.languages.register({ id: 'luau' });
+            
+            monaco.languages.setMonarchTokensProvider('luau', {
+                keywords: ['local', 'function', 'end', 'if', 'then', 'else', 'elseif', 'for', 'while', 'do', 'return', 'break', 'continue', 'nil', 'true', 'false', 'and', 'or', 'not', 'in', 'repeat', 'until', 'export', 'type'],
+                typeKeywords: ['number', 'string', 'boolean', 'table', 'any'],
+                operators: ['=', '>', '<', '!', '~', '?', ':', '==', '<=', '>=', '!=', '&&', '||', '+', '-', '*', '/', '&', '|', '^', '%'],
+                symbols: /[=><!~?:&|+\-*\/\^%]+/,
+                tokenizer: {
+                    root: [
+                        [/[a-z_$][\w$]*/, { cases: { '@typeKeywords': 'keyword', '@keywords': 'keyword', '@default': 'identifier' } }],
+                        { include: '@whitespace' },
+                        [/[{}()\[\]]/, '@brackets'],
+                        [/[<>](?!@symbols)/, '@brackets'],
+                        [/@symbols/, { cases: { '@operators': 'operator', '@default': '' } }],
+                        [/\d*\.\d+([eE][\-+]?\d+)?/, 'number.float'],
+                        [/0[xX][0-9a-fA-F]+/, 'number.hex'],
+                        [/\d+/, 'number'],
+                        [/[;,.]/, 'delimiter'],
+                        [/"([^"\\]|\\.)*$/, 'string.invalid'],
+                        [/"/, { token: 'string.quote', bracket: '@open', next: '@string' }],
+                        [/'/, { token: 'string.quote', bracket: '@open', next: '@string_single' }],
+                        [/--.*$/, 'comment'],
+                    ],
+                    whitespace: [[/[ \t\r\n]+/, 'white']],
+                    string: [
+                        [/[^\\"]+/, 'string'],
+                        [/\\./, 'string.escape.invalid'],
+                        [/"/, { token: 'string.quote', bracket: '@close', next: '@pop' }]
+                    ],
+                    string_single: [
+                        [/[^\\']+/, 'string'],
+                        [/\\./, 'string.escape.invalid'],
+                        [/'/, { token: 'string.quote', bracket: '@close', next: '@pop' }]
+                    ],
+                }
+            });
+
+            // 2. Define Custom Dark Theme
+            monaco.editor.defineTheme('luau-dark', {
+                base: 'vs-dark',
+                inherit: true,
+                rules: [
+                    { token: 'comment', foreground: '6A9955' },
+                    { token: 'keyword', foreground: 'C586C0' },
+                    { token: 'number', foreground: 'B5CEA8' },
+                    { token: 'string', foreground: 'CE9178' },
+                    { token: 'identifier', foreground: '9CDCFE' }
+                ],
+                colors: {
+                    'editor.background': '#161516',
+                    'editor.lineHighlightBackground': '#252426',
+                    'editorLineNumber.foreground': '#858585',
+                    'editorLineNumber.activeForeground': '#ffffff',
+                    'editorIndentGuide.background': '#404040',
+                    'minimap.background': '#1e1e1e', // Slightly lighter than editor for contrast
+                    'minimapSlider.background': '#ffffff40',
+                    'minimapSlider.hoverBackground': '#ffffff60',
+                    'minimapSlider.activeBackground': '#ffffff80',
+                }
+            });
+
+            // 3. Initialize Editor
+            editor = monaco.editor.create(document.getElementById('editor-container'), {
+                value: '', 
+                language: 'luau',
+                theme: 'luau-dark',
+                automaticLayout: true,
+                minimap: { 
+                    enabled: false, // Start disabled
+                    side: 'right',
+                    size: 'proportional',
+                    showSlider: 'always' // Keep slider bright and visible
+                },
+                fontSize: 14,
+                fontFamily: "'Consolas', 'Courier New', monospace",
+                lineNumbers: 'on',
+                roundedSelection: false,
+                scrollBeyondLastLine: false,
+                readOnly: false,
+                cursorBlinking: 'smooth',
+                cursorSmoothCaretAnimation: 'on',
+                padding: { top: 10 }
+            });
+
+            // 4. Logic to toggle Minimap based on content
+            editor.onDidChangeModelContent(() => {
+                const content = editor.getValue();
+                const minimapEnabled = content.trim().length > 0;
+                
+                if (editor.getOption(monaco.editor.EditorOption.minimap).enabled !== minimapEnabled) {
+                    editor.updateOptions({ minimap: { enabled: minimapEnabled } });
+                }
+
+                const activeTab = tabs.find(t => t.id === currentTabId);
+                if (activeTab) activeTab.content = content;
+            });
+
+            // 5. Tab System Logic
+            window.createNewTab = function() {
+                const id = ++currentTabId;
+                const name = `Untitled #${id}`;
+                
+                saveCurrentTabState();
+                tabs.push({ id, name, content: '' });
+                renderTabs();
+                switchTab(id);
+            };
+
+            window.switchTab = function(id) {
+                if (id === currentTabId) return;
+                saveCurrentTabState();
+
+                const tab = tabs.find(t => t.id === id);
+                if (tab) {
+                    currentTabId = id;
+                    editor.setValue(tab.content);
+                    renderTabs();
+                    
+                    const minimapEnabled = tab.content.trim().length > 0;
+                    editor.updateOptions({ minimap: { enabled: minimapEnabled } });
+                }
+            };
+
+            window.closeTab = function(event, id) {
+                event.stopPropagation(); 
+                
+                const index = tabs.findIndex(t => t.id === id);
+                if (index === -1) return;
+
+                tabs.splice(index, 1);
+
+                if (id === currentTabId) {
+                    if (tabs.length > 0) {
+                        const nextTab = tabs[Math.max(0, index - 1)];
+                        currentTabId = 0; 
+                        switchTab(nextTab.id);
+                    } else {
+                        currentTabId = 0;
+                        editor.setValue('');
+                        editor.updateOptions({ minimap: { enabled: false } });
+                    }
+                }
+                renderTabs();
+            };
+
+            function saveCurrentTabState() {
+                const activeTab = tabs.find(t => t.id === currentTabId);
+                if (activeTab) {
+                    activeTab.content = editor.getValue();
+                }
+            }
+
+            function renderTabs() {
+                const tabBar = document.getElementById('tabBar');
+                const addBtn = tabBar.querySelector('.add-tab');
+                
+                tabBar.innerHTML = '';
+                
+                tabs.forEach(tab => {
+                    const tabEl = document.createElement('div');
+                    tabEl.className = `tab ${tab.id === currentTabId ? 'active' : ''}`;
+                    tabEl.onclick = () => switchTab(tab.id);
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'tab-name';
+                    nameSpan.textContent = tab.name;
+                    
+                    const closeSpan = document.createElement('span');
+                    closeSpan.className = 'tab-close';
+                    closeSpan.textContent = '×';
+                    closeSpan.onclick = (e) => closeTab(e, tab.id);
+                    
+                    tabEl.appendChild(nameSpan);
+                    tabEl.appendChild(closeSpan);
+                    tabBar.appendChild(tabEl);
+                });
+
+                tabBar.appendChild(addBtn);
+            }
+
+            // Initialize with one tab
+            createNewTab();
+            editor.focus();
+        });
+    </script>
+</body>
+</html>
