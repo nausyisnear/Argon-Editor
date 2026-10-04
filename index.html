@@ -20,7 +20,7 @@
 
             overflow: hidden;
 
-            background: #1b1b1e;
+            background: #121212;
 
             font-family:
                 "Segoe UI",
@@ -35,7 +35,7 @@
             display: flex;
             flex-direction: column;
 
-            background: #1b1b1e;
+            background: #121212;
         }
 
 
@@ -51,9 +51,9 @@
             display: flex;
             align-items: stretch;
 
-            background: #1b1b1e;
+            background: #121212;
 
-            border-bottom: 1px solid #29292d;
+            border-bottom: 1px solid #242424;
         }
 
 
@@ -99,9 +99,9 @@
 
             font-size: 16px;
 
-            background: #1b1b1e;
+            background: #121212;
 
-            border-right: 1px solid #29292d;
+            border-right: 1px solid #242424;
 
             border-top: 2px solid transparent;
 
@@ -115,11 +115,11 @@
         }
 
         .tab:hover {
-            background: #202024;
+            background: #171717;
         }
 
         .tab.active {
-            background: #1d1d21;
+            background: #151515;
 
             border-top-color: #777bff;
         }
@@ -153,7 +153,7 @@
             width: 7px;
             height: 7px;
 
-            background: #1d1d21;
+            background: #151515;
 
             border-left: 2px solid #ededf0;
             border-bottom: 2px solid #ededf0;
@@ -222,7 +222,7 @@
         .close:hover {
             color: #ffffff;
 
-            background: #303035;
+            background: #303030;
         }
 
 
@@ -257,7 +257,7 @@
         .new-tab:hover {
             color: #eeeeee;
 
-            background: #202024;
+            background: #171717;
         }
 
 
@@ -271,7 +271,7 @@
             width: 100%;
             min-height: 0;
 
-            background: #1b1b1e;
+            background: #121212;
         }
 
 
@@ -295,10 +295,7 @@
 
 <div id="app">
 
-
-    <!-- ========================================
-         TOP BAR
-    ======================================== -->
+    <!-- TOP BAR -->
 
     <div class="topbar">
 
@@ -315,9 +312,7 @@
     </div>
 
 
-    <!-- ========================================
-         EDITOR
-    ======================================== -->
+    <!-- EDITOR -->
 
     <div id="editor"></div>
 
@@ -351,7 +346,7 @@
 
 
             /* ====================================
-               CUSTOM THEME
+               CUSTOM DARK THEME
             ==================================== */
 
             monaco.editor.defineTheme(
@@ -399,23 +394,31 @@
 
                     colors: {
 
+                        /* EXACT RGB 18,18,18 */
+
                         "editor.background":
-                            "#1B1B1E",
+                            "#121212",
 
                         "editor.foreground":
                             "#D4D4D8",
 
 
+                        /* Line numbers */
+
                         "editorLineNumber.foreground":
-                            "#8B8B94",
+                            "#777777",
 
                         "editorLineNumber.activeForeground":
                             "#CFCFD5",
 
 
-                        "editor.lineHighlightBackground":
-                            "#242428",
+                        /* Current line */
 
+                        "editor.lineHighlightBackground":
+                            "#181818",
+
+
+                        /* Selection */
 
                         "editor.selectionBackground":
                             "#30305A",
@@ -424,32 +427,40 @@
                             "#29294A",
 
 
+                        /* Cursor */
+
                         "editorCursor.foreground":
                             "#FFFFFF",
 
 
-                        "editorGutter.background":
-                            "#1B1B1E",
+                        /* Gutter */
 
+                        "editorGutter.background":
+                            "#121212",
+
+
+                        /* Suggestions */
 
                         "editorSuggestWidget.background":
-                            "#202024",
+                            "#181818",
 
                         "editorSuggestWidget.border":
-                            "#34343A",
+                            "#303030",
 
                         "editorSuggestWidget.selectedBackground":
-                            "#303038",
+                            "#292929",
 
+
+                        /* Scrollbar */
 
                         "scrollbarSlider.background":
-                            "#45454C88",
+                            "#45454588",
 
                         "scrollbarSlider.hoverBackground":
-                            "#55555D99",
+                            "#55555599",
 
                         "scrollbarSlider.activeBackground":
-                            "#66666FAA"
+                            "#666666AA"
 
                     }
 
@@ -476,7 +487,7 @@
                         automaticLayout: true,
 
 
-                        /* No minimap */
+                        /* Disable minimap */
 
                         minimap: {
 
@@ -555,12 +566,12 @@
                         contextmenu: true,
 
 
-                        /* Zoom */
+                        /* Mouse wheel zoom */
 
                         mouseWheelZoom: true,
 
 
-                        /* Tabs */
+                        /* Indentation */
 
                         tabSize: 4,
 
@@ -582,7 +593,7 @@
 
 
             /* ====================================
-               TAB DATA
+               TAB SYSTEM
             ==================================== */
 
             const tabsContainer =
@@ -618,8 +629,8 @@
 
 
                 /*
-                 * Each tab gets its own
-                 * Monaco text model.
+                 * Every tab has its own
+                 * Monaco model.
                  */
 
                 const model =
@@ -672,7 +683,7 @@
 
 
                 /*
-                 * Change Monaco's model.
+                 * Give Monaco the tab's model.
                  */
 
                 editor.setModel(
@@ -695,8 +706,8 @@
             function closeTab(id) {
 
                 /*
-                 * NEVER allow the last
-                 * remaining tab to close.
+                 * Don't allow the final tab
+                 * to be closed.
                  */
 
                 if (tabs.length <= 1) {
@@ -725,14 +736,14 @@
 
 
                 /*
-                 * Dispose Monaco model.
+                 * Dispose the Monaco model.
                  */
 
                 tab.model.dispose();
 
 
                 /*
-                 * Remove tab from array.
+                 * Remove the tab.
                  */
 
                 tabs.splice(index, 1);
@@ -740,7 +751,7 @@
 
                 /*
                  * If the active tab was closed,
-                 * select another tab.
+                 * select a nearby tab.
                  */
 
                 if (activeTabId === id) {
@@ -783,9 +794,7 @@
                     function (tab) {
 
 
-                        /*
-                         * Tab element
-                         */
+                        /* Tab */
 
                         const tabElement =
                             document.createElement(
@@ -809,9 +818,7 @@
                         }
 
 
-                        /*
-                         * File icon
-                         */
+                        /* File icon */
 
                         const icon =
                             document.createElement(
@@ -822,9 +829,7 @@
                             "file-icon";
 
 
-                        /*
-                         * Title
-                         */
+                        /* Title */
 
                         const title =
                             document.createElement(
@@ -838,9 +843,7 @@
                             tab.name;
 
 
-                        /*
-                         * Dirty indicator
-                         */
+                        /* Dirty indicator */
 
                         const dirty =
                             document.createElement(
@@ -854,9 +857,7 @@
                             "•";
 
 
-                        /*
-                         * Close button
-                         */
+                        /* Close button */
 
                         const close =
                             document.createElement(
@@ -868,15 +869,14 @@
 
 
                         /*
-                         * Only allow closing when
-                         * there are multiple tabs.
+                         * Only show X if there
+                         * are multiple tabs.
                          */
 
                         if (tabs.length > 1) {
 
                             close.textContent =
                                 "×";
-
 
                             close.title =
                                 "Close";
@@ -886,14 +886,7 @@
                                 "click",
                                 function (event) {
 
-                                    /*
-                                     * Prevent the
-                                     * tab itself from
-                                     * also being clicked.
-                                     */
-
                                     event.stopPropagation();
-
 
                                     closeTab(
                                         tab.id
@@ -906,8 +899,8 @@
                         else {
 
                             /*
-                             * Last tab:
-                             * hide the X.
+                             * Hide X when there
+                             * is only one tab.
                              */
 
                             close.style.visibility =
@@ -916,9 +909,7 @@
                         }
 
 
-                        /*
-                         * Build tab
-                         */
+                        /* Build tab */
 
                         tabElement.appendChild(
                             icon
@@ -937,10 +928,7 @@
                         );
 
 
-                        /*
-                         * Clicking the tab
-                         * switches to it.
-                         */
+                        /* Switch tab */
 
                         tabElement.addEventListener(
                             "click",
@@ -965,7 +953,7 @@
 
 
             /* ====================================
-               NEW TAB BUTTON
+               + NEW TAB
             ==================================== */
 
             newTabButton.addEventListener(
@@ -1006,10 +994,6 @@
                         return;
 
 
-                    /*
-                     * Put your save system here.
-                     */
-
                     console.log(
                         "Saved:",
                         activeTab.model.getValue()
@@ -1025,7 +1009,6 @@
             ==================================== */
 
             createTab();
-
 
         }
     );
