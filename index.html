@@ -3,359 +3,1034 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Luau Monaco Editor</title>
-    <!-- Monaco Editor CSS -->
-    <link rel="stylesheet" data-name="vs/editor/editor.main" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/editor/editor.main.min.css">
+
+    <title>Executor Editor</title>
+
     <style>
-        :root {
-            /* Exact background color 22, 21, 22 */
-            --bg-color: #161516; 
-            --tab-bg: #252426;
-            --tab-active-bg: #161516; 
-            --text-color: #cccccc;
-            --text-inactive: #969696;
-            --border-color: #2a292b;
-            --hover-bg: #3a393b;
+        * {
+            box-sizing: border-box;
         }
 
+        html,
         body {
+            width: 100%;
+            height: 100%;
             margin: 0;
             padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
+
             overflow: hidden;
+
+            background: #1b1b1e;
+
+            font-family:
+                "Segoe UI",
+                Arial,
+                sans-serif;
         }
 
-        /* --- Tab Bar --- */
-        .tab-bar {
+        #app {
+            width: 100%;
+            height: 100%;
+
             display: flex;
-            background-color: var(--bg-color);
-            height: 35px;
-            align-items: center;
-            padding-left: 5px;
-            border-bottom: 1px solid var(--border-color);
-            user-select: none;
+            flex-direction: column;
+
+            background: #1b1b1e;
+        }
+
+
+        /* ========================================
+           TOP BAR
+        ======================================== */
+
+        .topbar {
+            width: 100%;
+            height: 50px;
+            min-height: 50px;
+
+            display: flex;
+            align-items: stretch;
+
+            background: #1b1b1e;
+
+            border-bottom: 1px solid #29292d;
+        }
+
+
+        /* ========================================
+           TABS CONTAINER
+        ======================================== */
+
+        #tabs {
+            height: 50px;
+
+            display: flex;
+            align-items: stretch;
+
             overflow-x: auto;
             overflow-y: hidden;
+
             scrollbar-width: none;
         }
-        .tab-bar::-webkit-scrollbar {
+
+        #tabs::-webkit-scrollbar {
             display: none;
         }
 
+
+        /* ========================================
+           TAB
+        ======================================== */
+
         .tab {
+            height: 50px;
+
+            min-width: 210px;
+            max-width: 280px;
+
             display: flex;
             align-items: center;
-            background-color: var(--tab-bg);
-            color: var(--text-inactive);
-            padding: 0 15px;
-            height: 100%;
-            font-size: 13px;
+
+            gap: 11px;
+
+            padding: 0 16px;
+
+            color: #e8e8eb;
+
+            font-size: 16px;
+
+            background: #1b1b1e;
+
+            border-right: 1px solid #29292d;
+
+            border-top: 2px solid transparent;
+
+            user-select: none;
+
             cursor: pointer;
-            border-right: 1px solid var(--border-color);
-            transition: background 0.2s ease, color 0.2s ease;
-            position: relative;
-            white-space: nowrap;
-            min-width: 100px;
+
+            transition:
+                background 0.12s ease,
+                border-color 0.12s ease;
         }
 
         .tab:hover {
-            background-color: var(--hover-bg);
-            color: #e0e0e0;
+            background: #202024;
         }
 
-        /* Active Tab Styling - No Blue Line */
         .tab.active {
-            background-color: var(--tab-active-bg);
-            color: #ffffff;
-            border-right: 1px solid var(--border-color);
+            background: #1d1d21;
+
+            border-top-color: #777bff;
         }
 
-        .tab.active::before {
-            display: none;
-        }
 
-        .tab-name {
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            padding-right: 8px;
-        }
+        /* ========================================
+           FILE ICON
+        ======================================== */
 
-        .tab-close {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 16px;
-            height: 16px;
-            border-radius: 3px;
-            font-size: 14px;
-            color: #888;
-            opacity: 0;
-            transition: opacity 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.1s ease;
-            transform: scale(0.8);
-        }
+        .file-icon {
+            width: 18px;
+            height: 22px;
 
-        .tab:hover .tab-close,
-        .tab.active .tab-close {
-            opacity: 1;
-            transform: scale(1);
-        }
+            flex-shrink: 0;
 
-        .tab-close:hover {
-            background-color: #555;
-            color: #fff;
-        }
-
-        .tab-close:active {
-            transform: scale(0.9);
-        }
-
-        .add-tab {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-left: 5px;
-            font-size: 18px;
-            color: #888;
-            cursor: pointer;
-            width: 30px;
-            height: 30px;
-            border-radius: 3px;
-            transition: background 0.2s ease, color 0.2s ease;
-        }
-        .add-tab:hover {
-            background-color: var(--hover-bg);
-            color: #fff;
-        }
-        .add-tab:active {
-            transform: scale(0.9);
-        }
-
-        /* --- Editor Container --- */
-        #editor-container {
-            flex: 1;
-            width: 100%;
             position: relative;
+
+            border: 2px solid #ededf0;
+
+            border-radius: 3px;
         }
 
-        /* Monaco Specific Overrides */
-        .monaco-editor .margin {
-            background-color: #161516 !important;
+        .file-icon::before {
+            content: "";
+
+            position: absolute;
+
+            top: -2px;
+            right: -2px;
+
+            width: 7px;
+            height: 7px;
+
+            background: #1d1d21;
+
+            border-left: 2px solid #ededf0;
+            border-bottom: 2px solid #ededf0;
         }
+
+
+        /* ========================================
+           TAB TITLE
+        ======================================== */
+
+        .tab-title {
+            min-width: 0;
+
+            white-space: nowrap;
+
+            overflow: hidden;
+
+            text-overflow: ellipsis;
+        }
+
+
+        /* ========================================
+           DIRTY INDICATOR
+        ======================================== */
+
+        .dirty {
+            color: #dedee2;
+
+            font-size: 13px;
+
+            margin-left: 2px;
+        }
+
+
+        /* ========================================
+           CLOSE BUTTON
+        ======================================== */
+
+        .close {
+            margin-left: auto;
+
+            flex-shrink: 0;
+
+            width: 24px;
+            height: 24px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: #77777e;
+
+            font-size: 21px;
+
+            line-height: 1;
+
+            border-radius: 4px;
+
+            cursor: pointer;
+
+            transition:
+                color 0.12s ease,
+                background 0.12s ease;
+        }
+
+        .close:hover {
+            color: #ffffff;
+
+            background: #303035;
+        }
+
+
+        /* ========================================
+           NEW TAB BUTTON
+        ======================================== */
+
+        .new-tab {
+            width: 50px;
+            height: 50px;
+
+            flex-shrink: 0;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            color: #85858b;
+
+            font-size: 27px;
+
+            cursor: pointer;
+
+            user-select: none;
+
+            transition:
+                color 0.12s ease,
+                background 0.12s ease;
+        }
+
+        .new-tab:hover {
+            color: #eeeeee;
+
+            background: #202024;
+        }
+
+
+        /* ========================================
+           MONACO EDITOR
+        ======================================== */
+
+        #editor {
+            flex: 1;
+
+            width: 100%;
+            min-height: 0;
+
+            background: #1b1b1e;
+        }
+
+
+        /* ========================================
+           MONACO SCROLLBARS
+        ======================================== */
+
+        .monaco-editor .scrollbar.vertical {
+            width: 10px !important;
+        }
+
+        .monaco-editor .scrollbar.horizontal {
+            height: 10px !important;
+        }
+
     </style>
 </head>
+
+
 <body>
 
-    <!-- Tab Bar -->
-    <div class="tab-bar" id="tabBar">
-        <div class="add-tab" onclick="createNewTab()">+</div>
+<div id="app">
+
+
+    <!-- ========================================
+         TOP BAR
+    ======================================== -->
+
+    <div class="topbar">
+
+        <div id="tabs"></div>
+
+        <div
+            class="new-tab"
+            id="newTab"
+            title="New Tab"
+        >
+            +
+        </div>
+
     </div>
 
-    <!-- Editor Area -->
-    <div id="editor-container"></div>
 
-    <!-- Load Monaco -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
-    
-    <script>
-        let editor;
-        let currentTabId = 0;
-        let tabs = []; 
+    <!-- ========================================
+         EDITOR
+    ======================================== -->
 
-        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' } });
+    <div id="editor"></div>
 
-        require(['vs/editor/editor.main'], function () {
-            
-            // 1. Register Luau Language
-            monaco.languages.register({ id: 'luau' });
-            
-            monaco.languages.setMonarchTokensProvider('luau', {
-                keywords: ['local', 'function', 'end', 'if', 'then', 'else', 'elseif', 'for', 'while', 'do', 'return', 'break', 'continue', 'nil', 'true', 'false', 'and', 'or', 'not', 'in', 'repeat', 'until', 'export', 'type'],
-                typeKeywords: ['number', 'string', 'boolean', 'table', 'any'],
-                operators: ['=', '>', '<', '!', '~', '?', ':', '==', '<=', '>=', '!=', '&&', '||', '+', '-', '*', '/', '&', '|', '^', '%'],
-                symbols: /[=><!~?:&|+\-*\/\^%]+/,
-                tokenizer: {
-                    root: [
-                        [/[a-z_$][\w$]*/, { cases: { '@typeKeywords': 'keyword', '@keywords': 'keyword', '@default': 'identifier' } }],
-                        { include: '@whitespace' },
-                        [/[{}()\[\]]/, '@brackets'],
-                        [/[<>](?!@symbols)/, '@brackets'],
-                        [/@symbols/, { cases: { '@operators': 'operator', '@default': '' } }],
-                        [/\d*\.\d+([eE][\-+]?\d+)?/, 'number.float'],
-                        [/0[xX][0-9a-fA-F]+/, 'number.hex'],
-                        [/\d+/, 'number'],
-                        [/[;,.]/, 'delimiter'],
-                        [/"([^"\\]|\\.)*$/, 'string.invalid'],
-                        [/"/, { token: 'string.quote', bracket: '@open', next: '@string' }],
-                        [/'/, { token: 'string.quote', bracket: '@open', next: '@string_single' }],
-                        [/--.*$/, 'comment'],
+</div>
+
+
+<!-- ============================================
+     MONACO LOADER
+============================================= -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.min.js"></script>
+
+
+<script>
+
+    require.config({
+
+        paths: {
+
+            vs:
+                "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs"
+
+        }
+
+    });
+
+
+    require(
+        ["vs/editor/editor.main"],
+        function () {
+
+
+            /* ====================================
+               CUSTOM THEME
+            ==================================== */
+
+            monaco.editor.defineTheme(
+                "ExecutorDark",
+                {
+
+                    base: "vs-dark",
+
+                    inherit: true,
+
+                    rules: [
+
+                        {
+                            token: "comment",
+                            foreground: "6A6A72"
+                        },
+
+                        {
+                            token: "keyword",
+                            foreground: "C586C0"
+                        },
+
+                        {
+                            token: "string",
+                            foreground: "CE9178"
+                        },
+
+                        {
+                            token: "number",
+                            foreground: "B5CEA8"
+                        },
+
+                        {
+                            token: "type",
+                            foreground: "4EC9B0"
+                        },
+
+                        {
+                            token: "identifier",
+                            foreground: "D4D4D4"
+                        }
+
                     ],
-                    whitespace: [[/[ \t\r\n]+/, 'white']],
-                    string: [
-                        [/[^\\"]+/, 'string'],
-                        [/\\./, 'string.escape.invalid'],
-                        [/"/, { token: 'string.quote', bracket: '@close', next: '@pop' }]
-                    ],
-                    string_single: [
-                        [/[^\\']+/, 'string'],
-                        [/\\./, 'string.escape.invalid'],
-                        [/'/, { token: 'string.quote', bracket: '@close', next: '@pop' }]
-                    ],
+
+
+                    colors: {
+
+                        "editor.background":
+                            "#1B1B1E",
+
+                        "editor.foreground":
+                            "#D4D4D8",
+
+
+                        "editorLineNumber.foreground":
+                            "#8B8B94",
+
+                        "editorLineNumber.activeForeground":
+                            "#CFCFD5",
+
+
+                        "editor.lineHighlightBackground":
+                            "#242428",
+
+
+                        "editor.selectionBackground":
+                            "#30305A",
+
+                        "editor.inactiveSelectionBackground":
+                            "#29294A",
+
+
+                        "editorCursor.foreground":
+                            "#FFFFFF",
+
+
+                        "editorGutter.background":
+                            "#1B1B1E",
+
+
+                        "editorSuggestWidget.background":
+                            "#202024",
+
+                        "editorSuggestWidget.border":
+                            "#34343A",
+
+                        "editorSuggestWidget.selectedBackground":
+                            "#303038",
+
+
+                        "scrollbarSlider.background":
+                            "#45454C88",
+
+                        "scrollbarSlider.hoverBackground":
+                            "#55555D99",
+
+                        "scrollbarSlider.activeBackground":
+                            "#66666FAA"
+
+                    }
+
                 }
-            });
+            );
 
-            // 2. Define Custom Dark Theme
-            monaco.editor.defineTheme('luau-dark', {
-                base: 'vs-dark',
-                inherit: true,
-                rules: [
-                    { token: 'comment', foreground: '6A9955' },
-                    { token: 'keyword', foreground: 'C586C0' },
-                    { token: 'number', foreground: 'B5CEA8' },
-                    { token: 'string', foreground: 'CE9178' },
-                    { token: 'identifier', foreground: '9CDCFE' }
-                ],
-                colors: {
-                    'editor.background': '#161516',
-                    'editor.lineHighlightBackground': '#252426',
-                    'editorLineNumber.foreground': '#858585',
-                    'editorLineNumber.activeForeground': '#ffffff',
-                    'editorIndentGuide.background': '#404040',
-                    'minimap.background': '#1e1e1e', // Slightly lighter than editor for contrast
-                    'minimapSlider.background': '#ffffff40',
-                    'minimapSlider.hoverBackground': '#ffffff60',
-                    'minimapSlider.activeBackground': '#ffffff80',
-                }
-            });
 
-            // 3. Initialize Editor
-            editor = monaco.editor.create(document.getElementById('editor-container'), {
-                value: '', 
-                language: 'luau',
-                theme: 'luau-dark',
-                automaticLayout: true,
-                minimap: { 
-                    enabled: false, // Start disabled
-                    side: 'right',
-                    size: 'proportional',
-                    showSlider: 'always' // Keep slider bright and visible
-                },
-                fontSize: 14,
-                fontFamily: "'Consolas', 'Courier New', monospace",
-                lineNumbers: 'on',
-                roundedSelection: false,
-                scrollBeyondLastLine: false,
-                readOnly: false,
-                cursorBlinking: 'smooth',
-                cursorSmoothCaretAnimation: 'on',
-                padding: { top: 10 }
-            });
+            /* ====================================
+               CREATE MONACO EDITOR
+            ==================================== */
 
-            // 4. Logic to toggle Minimap based on content
-            editor.onDidChangeModelContent(() => {
-                const content = editor.getValue();
-                const minimapEnabled = content.trim().length > 0;
-                
-                if (editor.getOption(monaco.editor.EditorOption.minimap).enabled !== minimapEnabled) {
-                    editor.updateOptions({ minimap: { enabled: minimapEnabled } });
-                }
+            const editor =
+                monaco.editor.create(
+                    document.getElementById("editor"),
+                    {
 
-                const activeTab = tabs.find(t => t.id === currentTabId);
-                if (activeTab) activeTab.content = content;
-            });
+                        value: "",
 
-            // 5. Tab System Logic
-            window.createNewTab = function() {
-                const id = ++currentTabId;
-                const name = `Untitled #${id}`;
-                
-                saveCurrentTabState();
-                tabs.push({ id, name, content: '' });
-                renderTabs();
+                        language: "lua",
+
+                        theme: "ExecutorDark",
+
+
+                        automaticLayout: true,
+
+
+                        /* No minimap */
+
+                        minimap: {
+
+                            enabled: false
+
+                        },
+
+
+                        /* Font */
+
+                        fontFamily:
+                            "'Cascadia Code', 'Consolas', monospace",
+
+                        fontSize: 15,
+
+                        lineHeight: 22,
+
+                        fontLigatures: true,
+
+
+                        /* Cursor */
+
+                        cursorBlinking: "smooth",
+
+                        cursorSmoothCaretAnimation:
+                            "on",
+
+
+                        /* Rendering */
+
+                        smoothScrolling: true,
+
+                        renderWhitespace: "selection",
+
+                        renderLineHighlight: "line",
+
+                        roundedSelection: false,
+
+
+                        /* Scrolling */
+
+                        scrollBeyondLastLine: false,
+
+                        wordWrap: "off",
+
+
+                        /* Folding */
+
+                        folding: true,
+
+                        foldingHighlight: true,
+
+                        showFoldingControls:
+                            "mouseover",
+
+
+                        /* Line numbers */
+
+                        lineNumbers: "on",
+
+                        lineNumbersMinChars: 3,
+
+                        glyphMargin: false,
+
+
+                        /* Overview */
+
+                        overviewRulerBorder: false,
+
+                        hideCursorInOverviewRuler:
+                            true,
+
+
+                        /* Context menu */
+
+                        contextmenu: true,
+
+
+                        /* Zoom */
+
+                        mouseWheelZoom: true,
+
+
+                        /* Tabs */
+
+                        tabSize: 4,
+
+                        insertSpaces: true,
+
+
+                        /* Padding */
+
+                        padding: {
+
+                            top: 0,
+
+                            bottom: 20
+
+                        }
+
+                    }
+                );
+
+
+            /* ====================================
+               TAB DATA
+            ==================================== */
+
+            const tabsContainer =
+                document.getElementById("tabs");
+
+            const newTabButton =
+                document.getElementById("newTab");
+
+
+            let tabs = [];
+
+            let activeTabId = null;
+
+            let nextTabNumber = 1;
+
+
+            /* ====================================
+               CREATE TAB
+            ==================================== */
+
+            function createTab() {
+
+                const id =
+                    Date.now() +
+                    Math.random();
+
+
+                const name =
+                    `Untitled ${nextTabNumber}`;
+
+
+                nextTabNumber++;
+
+
+                /*
+                 * Each tab gets its own
+                 * Monaco text model.
+                 */
+
+                const model =
+                    monaco.editor.createModel(
+                        "",
+                        "lua"
+                    );
+
+
+                const tab = {
+
+                    id: id,
+
+                    name: name,
+
+                    model: model
+
+                };
+
+
+                tabs.push(tab);
+
+
                 switchTab(id);
-            };
 
-            window.switchTab = function(id) {
-                if (id === currentTabId) return;
-                saveCurrentTabState();
+            }
 
-                const tab = tabs.find(t => t.id === id);
-                if (tab) {
-                    currentTabId = id;
-                    editor.setValue(tab.content);
-                    renderTabs();
-                    
-                    const minimapEnabled = tab.content.trim().length > 0;
-                    editor.updateOptions({ minimap: { enabled: minimapEnabled } });
+
+            /* ====================================
+               SWITCH TAB
+            ==================================== */
+
+            function switchTab(id) {
+
+                const tab =
+                    tabs.find(
+                        function (item) {
+
+                            return item.id === id;
+
+                        }
+                    );
+
+
+                if (!tab)
+                    return;
+
+
+                activeTabId = id;
+
+
+                /*
+                 * Change Monaco's model.
+                 */
+
+                editor.setModel(
+                    tab.model
+                );
+
+
+                editor.focus();
+
+
+                renderTabs();
+
+            }
+
+
+            /* ====================================
+               CLOSE TAB
+            ==================================== */
+
+            function closeTab(id) {
+
+                /*
+                 * NEVER allow the last
+                 * remaining tab to close.
+                 */
+
+                if (tabs.length <= 1) {
+
+                    return;
+
                 }
-            };
 
-            window.closeTab = function(event, id) {
-                event.stopPropagation(); 
-                
-                const index = tabs.findIndex(t => t.id === id);
-                if (index === -1) return;
+
+                const index =
+                    tabs.findIndex(
+                        function (item) {
+
+                            return item.id === id;
+
+                        }
+                    );
+
+
+                if (index === -1)
+                    return;
+
+
+                const tab =
+                    tabs[index];
+
+
+                /*
+                 * Dispose Monaco model.
+                 */
+
+                tab.model.dispose();
+
+
+                /*
+                 * Remove tab from array.
+                 */
 
                 tabs.splice(index, 1);
 
-                if (id === currentTabId) {
-                    if (tabs.length > 0) {
-                        const nextTab = tabs[Math.max(0, index - 1)];
-                        currentTabId = 0; 
-                        switchTab(nextTab.id);
-                    } else {
-                        currentTabId = 0;
-                        editor.setValue('');
-                        editor.updateOptions({ minimap: { enabled: false } });
-                    }
-                }
-                renderTabs();
-            };
 
-            function saveCurrentTabState() {
-                const activeTab = tabs.find(t => t.id === currentTabId);
-                if (activeTab) {
-                    activeTab.content = editor.getValue();
+                /*
+                 * If the active tab was closed,
+                 * select another tab.
+                 */
+
+                if (activeTabId === id) {
+
+                    const newIndex =
+                        Math.min(
+                            index,
+                            tabs.length - 1
+                        );
+
+
+                    activeTabId =
+                        tabs[newIndex].id;
+
+
+                    editor.setModel(
+                        tabs[newIndex].model
+                    );
+
                 }
+
+
+                renderTabs();
+
+                editor.focus();
+
             }
+
+
+            /* ====================================
+               RENDER TABS
+            ==================================== */
 
             function renderTabs() {
-                const tabBar = document.getElementById('tabBar');
-                const addBtn = tabBar.querySelector('.add-tab');
-                
-                tabBar.innerHTML = '';
-                
-                tabs.forEach(tab => {
-                    const tabEl = document.createElement('div');
-                    tabEl.className = `tab ${tab.id === currentTabId ? 'active' : ''}`;
-                    tabEl.onclick = () => switchTab(tab.id);
-                    
-                    const nameSpan = document.createElement('span');
-                    nameSpan.className = 'tab-name';
-                    nameSpan.textContent = tab.name;
-                    
-                    const closeSpan = document.createElement('span');
-                    closeSpan.className = 'tab-close';
-                    closeSpan.textContent = '×';
-                    closeSpan.onclick = (e) => closeTab(e, tab.id);
-                    
-                    tabEl.appendChild(nameSpan);
-                    tabEl.appendChild(closeSpan);
-                    tabBar.appendChild(tabEl);
-                });
 
-                tabBar.appendChild(addBtn);
+                tabsContainer.innerHTML = "";
+
+
+                tabs.forEach(
+                    function (tab) {
+
+
+                        /*
+                         * Tab element
+                         */
+
+                        const tabElement =
+                            document.createElement(
+                                "div"
+                            );
+
+
+                        tabElement.className =
+                            "tab";
+
+
+                        if (
+                            tab.id ===
+                            activeTabId
+                        ) {
+
+                            tabElement.classList.add(
+                                "active"
+                            );
+
+                        }
+
+
+                        /*
+                         * File icon
+                         */
+
+                        const icon =
+                            document.createElement(
+                                "div"
+                            );
+
+                        icon.className =
+                            "file-icon";
+
+
+                        /*
+                         * Title
+                         */
+
+                        const title =
+                            document.createElement(
+                                "span"
+                            );
+
+                        title.className =
+                            "tab-title";
+
+                        title.textContent =
+                            tab.name;
+
+
+                        /*
+                         * Dirty indicator
+                         */
+
+                        const dirty =
+                            document.createElement(
+                                "span"
+                            );
+
+                        dirty.className =
+                            "dirty";
+
+                        dirty.textContent =
+                            "•";
+
+
+                        /*
+                         * Close button
+                         */
+
+                        const close =
+                            document.createElement(
+                                "span"
+                            );
+
+                        close.className =
+                            "close";
+
+
+                        /*
+                         * Only allow closing when
+                         * there are multiple tabs.
+                         */
+
+                        if (tabs.length > 1) {
+
+                            close.textContent =
+                                "×";
+
+
+                            close.title =
+                                "Close";
+
+
+                            close.addEventListener(
+                                "click",
+                                function (event) {
+
+                                    /*
+                                     * Prevent the
+                                     * tab itself from
+                                     * also being clicked.
+                                     */
+
+                                    event.stopPropagation();
+
+
+                                    closeTab(
+                                        tab.id
+                                    );
+
+                                }
+                            );
+
+                        }
+                        else {
+
+                            /*
+                             * Last tab:
+                             * hide the X.
+                             */
+
+                            close.style.visibility =
+                                "hidden";
+
+                        }
+
+
+                        /*
+                         * Build tab
+                         */
+
+                        tabElement.appendChild(
+                            icon
+                        );
+
+                        tabElement.appendChild(
+                            title
+                        );
+
+                        tabElement.appendChild(
+                            dirty
+                        );
+
+                        tabElement.appendChild(
+                            close
+                        );
+
+
+                        /*
+                         * Clicking the tab
+                         * switches to it.
+                         */
+
+                        tabElement.addEventListener(
+                            "click",
+                            function () {
+
+                                switchTab(
+                                    tab.id
+                                );
+
+                            }
+                        );
+
+
+                        tabsContainer.appendChild(
+                            tabElement
+                        );
+
+                    }
+                );
+
             }
 
-            // Initialize with one tab
-            createNewTab();
-            editor.focus();
-        });
-    </script>
+
+            /* ====================================
+               NEW TAB BUTTON
+            ==================================== */
+
+            newTabButton.addEventListener(
+                "click",
+                function () {
+
+                    createTab();
+
+                }
+            );
+
+
+            /* ====================================
+               CTRL + S
+            ==================================== */
+
+            editor.addCommand(
+
+                monaco.KeyMod.CtrlCmd |
+                monaco.KeyCode.KeyS,
+
+                function () {
+
+                    const activeTab =
+                        tabs.find(
+                            function (tab) {
+
+                                return (
+                                    tab.id ===
+                                    activeTabId
+                                );
+
+                            }
+                        );
+
+
+                    if (!activeTab)
+                        return;
+
+
+                    /*
+                     * Put your save system here.
+                     */
+
+                    console.log(
+                        "Saved:",
+                        activeTab.model.getValue()
+                    );
+
+                }
+
+            );
+
+
+            /* ====================================
+               START WITH ONE TAB
+            ==================================== */
+
+            createTab();
+
+
+        }
+    );
+
+</script>
+
 </body>
 </html>
